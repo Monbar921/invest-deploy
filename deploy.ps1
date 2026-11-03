@@ -81,7 +81,8 @@ function Build-Ui([string] $Repo) {
     }
 }
 
-$targets = foreach ($service in $Services) {
+# @(...): с одним сервисом foreach вернул бы строку, и @targets передал бы её в WSL по символам
+$targets = @(foreach ($service in $Services) {
     switch ($service) {
         { $JavaRepos.ContainsKey($_) } {
             $repo = Join-Path $Projects $JavaRepos[$service]
@@ -95,7 +96,7 @@ $targets = foreach ($service in $Services) {
         }
         default { $service }
     }
-}
+})
 
 Invoke-Native "deploy: $($targets -join ' ')" {
     wsl.exe -d $Distro --cd $PSScriptRoot -- bash scripts/deploy.sh @targets

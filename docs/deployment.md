@@ -20,9 +20,9 @@ copy .env.example .env    # заполнить TINKOFF_TOKEN, остальное
 .\deploy.ps1              # создаст кластер и выкатит всё
 ```
 
-База после первого запуска пустая. В базовом конфиге invest-api шаг `bond` ночной синхронизации выключен - чтобы
-облигации появились, включите его в `config/invest-api/application-k8s.yml` (см. ниже) или вызовите
-maintenance-эндпоинт `POST /internal/rest/maintenance/bond/sync-all` через port-forward.
+База после первого запуска пустая. invest-api заполняет её сам, если в его `config/application.yml` включены
+`sync.run-on-startup` и шаги `bond`/`coupon`: цепочка идёт в фоне несколько минут, UI в это время уже открывается.
+Иначе - maintenance-эндпоинт `POST /internal/rest/maintenance/bond/sync-all` через port-forward.
 
 ## Обновление сервисов
 
