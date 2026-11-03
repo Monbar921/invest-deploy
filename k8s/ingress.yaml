@@ -1,0 +1,57 @@
+# Traefik идёт в k3s из коробки, порт 80 балансировщика k3d проброшен на localhost Windows.
+# UI и gateway на одном origin: gateway держит сессию в cookie
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: invest
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: invest.localhost
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: invest-gateway
+                port:
+                  number: 80
+          - path: /oauth2
+            pathType: Prefix
+            backend:
+              service:
+                name: invest-gateway
+                port:
+                  number: 80
+          - path: /login
+            pathType: Prefix
+            backend:
+              service:
+                name: invest-gateway
+                port:
+                  number: 80
+          - path: /logout
+            pathType: Prefix
+            backend:
+              service:
+                name: invest-gateway
+                port:
+                  number: 80
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: invest-api-ui
+                port:
+                  number: 80
+    - host: keycloak.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: keycloak
+                port:
+                  number: 80

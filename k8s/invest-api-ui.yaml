@@ -1,0 +1,54 @@
+# __TAG__ подставляет scripts/deploy.sh
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: invest-api-ui
+  labels:
+    app: invest-api-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: invest-api-ui
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: invest-api-ui
+    spec:
+      containers:
+        - name: invest-api-ui
+          image: invest-api-ui:__TAG__
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8080
+              name: http
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "16Mi"
+            limits:
+              memory: "64Mi"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: invest-api-ui
+  labels:
+    app: invest-api-ui
+spec:
+  selector:
+    app: invest-api-ui
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

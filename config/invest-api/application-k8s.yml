@@ -1,0 +1,24 @@
+# Профиль k8s: дополняет config/application.yml из репозитория invest-api (оба файла лежат в ConfigMap invest-api-config).
+# Секреты приходят из Secret invest-secrets (заполняется из .env)
+invest:
+  connector:
+    token: ${TINKOFF_TOKEN}
+
+spring:
+  datasource:
+    hikari:
+      jdbc-url: jdbc:postgresql://postgres:5432/invest
+      username: invest_api_app
+      password: ${INVEST_DB_PASSWORD}
+      connection-init-sql: SET search_path TO invest_api
+  liquibase:
+    enabled: true
+    change-log: classpath:liquibase/db.changelog-master.xml
+    default-schema: invest_api
+    parameters:
+      appUsername: ${spring.datasource.hikari.username}
+      schema: invest_api
+      sql_schema: invest_api
+
+server:
+  port: 8080

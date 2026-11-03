@@ -1,0 +1,92 @@
+# __TAG__ подставляет scripts/deploy.sh. Образ импортируется в кластер через k3d image import, registry не нужен
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: invest-api
+  labels:
+    app: invest-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: invest-api
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: invest-api
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+        - name: invest-api
+          image: invest-api:__TAG__
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: k8s
+            - name: TINKOFF_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: invest-secrets
+                  key: TINKOFF_TOKEN
+            - name: INVEST_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: invest-secrets
+                  key: INVEST_DB_PASSWORD
+          # application.yml из репозитория + application-k8s.yml из invest-deploy
+          volumeMounts:
+            - name: config
+              mountPath: /app/config
+              readOnly: true
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              memory: "1Gi"
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+            failureThreshold: 60
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+            periodSeconds: 15
+            failureThreshold: 3
+      volumes:
+        - name: config
+          configMap:
+            name: invest-api-config
+---
+# наружу не публикуется: доступ только через invest-gateway
+apiVersion: v1
+kind: Service
+metadata:
+  name: invest-api
+  labels:
+    app: invest-api
+spec:
+  selector:
+    app: invest-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

@@ -1,0 +1,14 @@
+# CoreDNS в k3s подключает *.override из этого ConfigMap.
+# Браузер ходит в Keycloak по http://keycloak.localhost, и gateway должен видеть тот же issuer:
+# внутри кластера keycloak.localhost резолвится в сервис keycloak
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: coredns-custom
+  namespace: kube-system
+data:
+  invest.override: |
+    rewrite stop {
+      name exact keycloak.localhost keycloak.invest.svc.cluster.local
+      answer auto
+    }

@@ -1,0 +1,45 @@
+{
+  "realm": "invest",
+  "enabled": true,
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "clients": [
+    {
+      "clientId": "invest-gateway",
+      "name": "invest-gateway",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${KEYCLOAK_CLIENT_SECRET}",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": [
+        "http://invest.localhost:8088/login/oauth2/code/keycloak"
+      ],
+      "webOrigins": [
+        "+"
+      ],
+      "attributes": {
+        "post.logout.redirect.uris": "http://invest.localhost:8088/"
+      }
+    }
+  ],
+  "users": [
+    {
+      "username": "investor",
+      "enabled": true,
+      "email": "investor@invest.localhost",
+      "emailVerified": true,
+      "firstName": "Test",
+      "lastName": "Investor",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "investor",
+          "temporary": false
+        }
+      ]
+    }
+  ]
+}

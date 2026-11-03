@@ -1,0 +1,86 @@
+# __TAG__ подставляет scripts/deploy.sh
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: invest-gateway
+  labels:
+    app: invest-gateway
+spec:
+  # сессии в памяти: второй экземпляр без общего хранилища сессий не нужен
+  replicas: 1
+  selector:
+    matchLabels:
+      app: invest-gateway
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: invest-gateway
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+        - name: invest-gateway
+          image: invest-gateway:__TAG__
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: k8s
+            - name: KEYCLOAK_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: invest-secrets
+                  key: KEYCLOAK_CLIENT_SECRET
+          volumeMounts:
+            - name: config
+              mountPath: /app/config
+              readOnly: true
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              memory: "512Mi"
+          # без авторизации gateway открывает только /actuator/health
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+            failureThreshold: 30
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+            periodSeconds: 15
+      volumes:
+        - name: config
+          configMap:
+            name: invest-gateway-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: invest-gateway
+  labels:
+    app: invest-gateway
+spec:
+  selector:
+    app: invest-gateway
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

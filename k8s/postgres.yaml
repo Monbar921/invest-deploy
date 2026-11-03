@@ -1,0 +1,101 @@
+# Скрипт выполняется только при первом запуске, на пустом томе. Пароли из .env после этого не меняются,
+# чтобы применить новые - удалить том (cluster.ps1 down или kubectl delete pvc data-postgres-0)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init
+data:
+  init.sh: |
+    set -e
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" <<EOSQL
+    CREATE USER invest_api_app WITH PASSWORD '$INVEST_DB_PASSWORD';
+    CREATE DATABASE invest OWNER invest_api_app;
+    CREATE USER keycloak WITH PASSWORD '$KEYCLOAK_DB_PASSWORD';
+    CREATE DATABASE keycloak OWNER keycloak;
+    EOSQL
+    # Liquibase создаёт таблицы, но не схему
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname invest \
+      -c 'CREATE SCHEMA invest_api AUTHORIZATION invest_api_app'
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  labels:
+    app: postgres
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:17-alpine
+          ports:
+            - containerPort: 5432
+              name: postgres
+          env:
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: invest-secrets
+                  key: POSTGRES_PASSWORD
+            - name: INVEST_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: invest-secrets
+                  key: INVEST_DB_PASSWORD
+            - name: KEYCLOAK_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: invest-secrets
+                  key: KEYCLOAK_DB_PASSWORD
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+            - name: init
+              mountPath: /docker-entrypoint-initdb.d
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              memory: "512Mi"
+          readinessProbe:
+            exec:
+              command: [ "pg_isready", "-U", "postgres" ]
+            periodSeconds: 5
+      volumes:
+        - name: init
+          configMap:
+            name: postgres-init
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 2Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  labels:
+    app: postgres
+spec:
+  selector:
+    app: postgres
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432

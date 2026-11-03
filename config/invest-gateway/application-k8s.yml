@@ -1,0 +1,18 @@
+# Профиль k8s: дополняет config/application.yml из репозитория invest-gateway (оба файла лежат в ConfigMap invest-gateway-config)
+server:
+  port: 8080
+
+invest:
+  gateway:
+    invest-api-uri: http://invest-api
+  keycloak:
+    # тот же адрес, что видит браузер: внутри кластера CoreDNS переписывает keycloak.localhost на сервис keycloak
+    issuer-uri: http://keycloak.localhost:8088/realms/invest
+
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            client-secret: ${KEYCLOAK_CLIENT_SECRET}
