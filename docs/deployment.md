@@ -101,6 +101,7 @@ Deployment'ы: `invest-api`, `invest-gateway`, `invest-api-ui`, `keycloak`; Post
 | `ErrImageNeverPull`                        | образа нет в кластере - повторить деплой сервиса                      |
 | `CrashLoopBackOff` у invest-api            | `.\cluster.ps1 logs api`, обычно токен или БД                         |
 | gateway не стартует                        | при старте он читает OIDC discovery Keycloak; когда Keycloak поднимется, под перезапустится сам |
+| `.\cluster.ps1 up` долго молчит после перезапуска Docker Desktop / Windows | `cluster.sh up` сам восстанавливает kubeconfig (`k3d kubeconfig merge`) и, если k3s жив, а балансировщик сбрасывает соединения, перезапускает `k3d-invest-serverlb`. Вручную: `wsl k3d kubeconfig merge invest -d`, `wsl docker restart k3d-invest-serverlb` |
 | `API кластера не отвечает 2 минуты`        | k3s упал при старте: `wsl k3d cluster stop invest`, затем `.\cluster.ps1 up`; не помогло - `down` и заново |
 | страница не открывается, пустой ответ      | Docker Desktop не запущен, кластер остановлен (`.\cluster.ps1`) или порт 8088 занят |
 | `404 Not Found / nginx` вместо UI          | порт держит кто-то другой, например nginx-ingress MicroK8s (hostNetwork): `sudo microk8s stop`, `sudo snap disable microk8s` |

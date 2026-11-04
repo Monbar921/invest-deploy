@@ -21,14 +21,26 @@ up() {
     k3d cluster start "$CLUSTER" --wait
   fi
 
+  # ~/.kube/config бывает перезаписан (например при перезапуске Docker Desktop) - без контекста kubectl ждал бы впустую.
+  # merge идемпотентен и заодно обновляет порт API, если он сменился
+  k3d kubeconfig merge "$CLUSTER" --kubeconfig-merge-default --kubeconfig-switch-context >/dev/null
+
   # сразу после create/start API-сервер ещё отвечает 503, а CoreDNS и Traefik ставятся следом
   # k3s иногда падает на первом старте (гонка RBAC у cloud-controller-manager), а контейнер остаётся Up
+  log "Жду API кластера $CLUSTER"
   local i ready=""
   for i in $(seq 1 60); do
     if kubectl --context "$CONTEXT" --request-timeout=5s -n kube-system get deployment/coredns >/dev/null 2>&1; then
       ready=1
       break
     fi
+    # после перезапуска Docker Desktop балансировщик k3d может сбрасывать соединения, хотя k3s внутри узла жив:
+    # его nginx держит старое подключение к узлу. Перезапуск балансировщика это лечит
+    if ((i == 10)) && docker exec "k3d-$CLUSTER-server-0" kubectl get --raw /readyz >/dev/null 2>&1; then
+      echo "k3s внутри узла отвечает, а через балансировщик нет - перезапускаю k3d-$CLUSTER-serverlb"
+      docker restart "k3d-$CLUSTER-serverlb" >/dev/null
+    fi
+    ((i % 10 == 0)) && echo "API ещё не отвечает, жду ($((i * 2)) с из 120)"
     sleep 2
   done
   [[ -n "$ready" ]] || die "API кластера не отвечает 2 минуты. Перезапустите: k3d cluster stop $CLUSTER && k3d cluster start $CLUSTER (или cluster.ps1 down, затем up)"
