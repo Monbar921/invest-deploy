@@ -43,6 +43,25 @@ spec:
                 secretKeyRef:
                   name: invest-secrets
                   key: INVEST_DB_PASSWORD
+            # Telegram-бот: ключей может не быть в старом .env - тогда бот выключен (значения по умолчанию в application.yml)
+            - name: TELEGRAM_BOT_ENABLED
+              valueFrom:
+                secretKeyRef:
+                  name: invest-secrets
+                  key: TELEGRAM_BOT_ENABLED
+                  optional: true
+            - name: TELEGRAM_BOT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: invest-secrets
+                  key: TELEGRAM_BOT_TOKEN
+                  optional: true
+            - name: TELEGRAM_BOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: invest-secrets
+                  key: TELEGRAM_BOT_USERNAME
+                  optional: true
           # application.yml из репозитория + application-k8s.yml из invest-deploy
           volumeMounts:
             - name: config

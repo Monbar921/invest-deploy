@@ -79,8 +79,31 @@ wsl kubectl --context k3d-invest -n invest rollout restart deployment/invest-api
 Что применяется не сразу:
 
 - **Пароли БД** - только при первом создании тома Postgres. Чтобы сменить: `.\cluster.ps1 down` и заново.
+- **Переменные из `.env`** (Secret `invest-secrets`) обновляются при каждом `deploy.ps1`, но под читает их только
+  при старте: после правки `.env` - `.\deploy.ps1 api -SkipBuild` (или `rollout restart`).
 - **Realm** импортируется, только если его ещё нет. После правок `invest-realm.json` удалить realm `invest`
   в админке Keycloak и выполнить `.\deploy.ps1 keycloak`.
+
+### Telegram-бот
+
+В `.env`: `TELEGRAM_BOT_ENABLED=true`, `TELEGRAM_BOT_TOKEN` (от @BotFather), `TELEGRAM_BOT_USERNAME` (без @), затем
+`.\deploy.ps1 api -SkipBuild`. В логе invest-api - `Telegram bot @<имя> long polling started`.
+
+Telegram в России заблокирован. Поды k3d выходят в сеть через Docker Desktop (WSL) и Windows, поэтому их трафик
+перехватывает sing-box в режиме TUN на Windows: проверено 2026-11-08 - из пода `api.telegram.org` отвечает `302`,
+Мосбиржа идёт напрямую. Прокси в invest-api не нужен (`TELEGRAM_PROXY_TYPE` не задан = `NONE`). Без запущенного
+sing-box бот не получает сообщения, в логе раз в 5 минут `Telegram is unavailable`; остальное работает. Настройка
+sing-box - в invest-api: `docs/features/INVEST-001-telegram-bot/proxy.md`.
+
+Бот получает сообщения long polling'ом, и Telegram отдаёт их только одному подключению: при выкатке, пока старый и
+новый под работают вместе (`maxSurge: 1`), в логе возможны ошибки `409 Conflict` от `getUpdates` - они проходят, когда
+старый под остановится.
+
+Проверка связи из кластера:
+
+```powershell
+wsl kubectl --context k3d-invest -n invest run tgcheck --rm -i --restart=Never --image=curlimages/curl:8.11.1 -- curl -s -4 -o /dev/null -w "%{http_code}" https://api.telegram.org
+```
 
 ## Логи и диагностика
 
