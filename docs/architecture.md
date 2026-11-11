@@ -28,6 +28,8 @@ deploy.ps1 api ui                       scripts/deploy.sh api@<sha> ui@<sha>
 ```
 браузер ──▶ localhost:8088 ──▶ k3d loadbalancer ──▶ Traefik
               invest.localhost   /api /oauth2 /login /logout ──▶ invest-gateway ──▶ invest-api ──▶ postgres
+                                 /bonds /issuers /collections
+                                 /sitemap.xml /robots.txt    ──▶ invest-gateway (SEO-страницы; index.html берёт у UI)
                                  /                           ──▶ invest-api-ui (nginx)
               keycloak.localhost                             ──▶ keycloak ──▶ postgres
 ```
@@ -41,7 +43,7 @@ deploy.ps1 api ui                       scripts/deploy.sh api@<sha> ui@<sha>
 | invest-api       | `k8s/invest-api.yaml`    | наружу не публикуется                                                    |
 | invest-gateway   | `k8s/invest-gateway.yaml`| один экземпляр: сессии в памяти                                          |
 | invest-api-ui    | `k8s/invest-api-ui.yaml` | nginx со статикой, SPA-fallback                                         |
-| ingress          | `k8s/ingress.yaml`       | UI и gateway на одном host - gateway держит сессию в cookie              |
+| ingress          | `k8s/ingress.yaml`       | UI и gateway на одном host - gateway держит сессию в cookie; SEO-страницы (`/bonds`, `/issuers`, `/collections`, `sitemap.xml`, `robots.txt`) - в gateway |
 
 ### Конфигурация сервисов
 

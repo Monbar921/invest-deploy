@@ -5,6 +5,9 @@ server:
 invest:
   gateway:
     invest-api-uri: http://invest-api
+    # SEO-страницы берут index.html у nginx UI внутри кластера; адрес сайта для canonical - из X-Forwarded-* Traefik
+    seo:
+      ui-url: http://invest-api-ui
   keycloak:
     # тот же адрес, что видит браузер: внутри кластера CoreDNS переписывает keycloak.localhost на сервис keycloak
     issuer-uri: http://keycloak.localhost:8088/realms/invest

@@ -38,6 +38,43 @@ spec:
                 name: invest-gateway
                 port:
                   number: 80
+          # SEO-страницы: gateway отдаёт index.html UI с метаданными и готовым HTML (облигация, эмитент, подборка,
+          # список). Prefix /bonds - это /bonds и /bonds/..., ассеты UI лежат в /assets и сюда не попадают
+          - path: /bonds
+            pathType: Prefix
+            backend:
+              service:
+                name: invest-gateway
+                port:
+                  number: 80
+          - path: /issuers
+            pathType: Prefix
+            backend:
+              service:
+                name: invest-gateway
+                port:
+                  number: 80
+          - path: /collections
+            pathType: Prefix
+            backend:
+              service:
+                name: invest-gateway
+                port:
+                  number: 80
+          - path: /sitemap.xml
+            pathType: Exact
+            backend:
+              service:
+                name: invest-gateway
+                port:
+                  number: 80
+          - path: /robots.txt
+            pathType: Exact
+            backend:
+              service:
+                name: invest-gateway
+                port:
+                  number: 80
           - path: /
             pathType: Prefix
             backend:
