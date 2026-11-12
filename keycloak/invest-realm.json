@@ -1,7 +1,7 @@
 {
   "realm": "invest",
   "enabled": true,
-  "registrationAllowed": false,
+  "registrationAllowed": true,
   "loginWithEmailAllowed": true,
   "clients": [
     {

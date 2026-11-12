@@ -56,7 +56,7 @@ copy .env.example .env    # заполнить TINKOFF_TOKEN, остальное
 | `.env`                                | секреты (шаблон `.env.example`), в git не попадает                        |
 | `config/<сервис>/application-k8s.yml` | профиль `k8s` поверх `config/application.yml` из репозитория сервиса      |
 | `k8s/*.yaml`                          | манифесты, `__TAG__` подставляет `deploy.sh`                              |
-| `keycloak/invest-realm.json`          | realm `invest`: клиент `invest-gateway` и тестовый пользователь           |
+| `keycloak/invest-realm.json`          | realm `invest`: клиент `invest-gateway`, тестовый пользователь, саморегистрация |
 | `docker/`                             | Dockerfile для Java-сервисов (общий), для UI и конфиг nginx               |
 | `certs/`                              | корневой сертификат Минцифры для truststore Java-образов                  |
 
@@ -82,7 +82,12 @@ wsl kubectl --context k3d-invest -n invest rollout restart deployment/invest-api
 - **Переменные из `.env`** (Secret `invest-secrets`) обновляются при каждом `deploy.ps1`, но под читает их только
   при старте: после правки `.env` - `.\deploy.ps1 api -SkipBuild` (или `rollout restart`).
 - **Realm** импортируется, только если его ещё нет. После правок `invest-realm.json` удалить realm `invest`
-  в админке Keycloak и выполнить `.\deploy.ps1 keycloak`.
+  в админке Keycloak и выполнить `.\deploy.ps1 keycloak`. Удаление realm удаляет и пользователей - отдельную
+  настройку на работающем стенде проще поменять в админке руками (как саморегистрацию ниже).
+- **Саморегистрация** включена в `invest-realm.json` (`registrationAllowed: true`): на форме входа есть ссылка
+  «Регистрация», её открывает кнопка «Войти / Зарегистрироваться» лендинга UI. Realm, импортированный раньше, её не
+  получит - включить в админке: Realm settings → Login → User registration. Подтверждения почты нет (SMTP в realm не
+  настроен): аккаунт работает сразу после регистрации.
 
 ### Telegram-бот
 
