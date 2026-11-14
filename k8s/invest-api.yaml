@@ -62,6 +62,13 @@ spec:
                   name: invest-secrets
                   key: TELEGRAM_BOT_USERNAME
                   optional: true
+            # импорт от брокера: без ключа импорт по токену выключен, импорт файлов работает
+            - name: IMPORT_TOKEN_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: invest-secrets
+                  key: IMPORT_TOKEN_KEY
+                  optional: true
           # application.yml из репозитория + application-k8s.yml из invest-deploy
           volumeMounts:
             - name: config

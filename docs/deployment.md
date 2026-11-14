@@ -110,6 +110,14 @@ sing-box - в invest-api: `docs/features/INVEST-001-telegram-bot/proxy.md`.
 wsl kubectl --context k3d-invest -n invest run tgcheck --rm -i --restart=Never --image=curlimages/curl:8.11.1 -- curl -s -4 -o /dev/null -w "%{http_code}" https://api.telegram.org
 ```
 
+### Импорт от брокера
+
+Импорт файлов отчётов работает без настройки. Для импорта по токену T-Invest в `.env` - `IMPORT_TOKEN_KEY` (32 байта
+в Base64: `openssl rand -base64 32`), затем `.\deploy.ps1 api -SkipBuild`. Ключом шифруются токены пользователей в
+БД: со сменой ключа сохранённые токены перестают читаться, пользователи подключают их заново. Ключ не той длины не даёт
+invest-api стартовать. Импорт входит в платный тариф (`BROKER_IMPORT`) - выдать его для проверки:
+`PUT /internal/rest/maintenance/account/<sub>/plan` (см. invest-api `docs/deployment.md`).
+
 ## Логи и диагностика
 
 ```powershell
